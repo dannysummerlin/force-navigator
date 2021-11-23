@@ -31,9 +31,15 @@ var sfnav = (()=>{
 			key: sessionHash,
 			sessionId: sessionId
 		}
-		chrome.runtime.sendMessage( Object.assign(options, {action:'getSetupTree'}), response=>{ Object.assign(commands, response) })
-		chrome.runtime.sendMessage( Object.assign(options, {action:'getMetadata'}), response=>{ Object.assign(commands, response) })
-		chrome.runtime.sendMessage( Object.assign(options, {action:'getCustomObjects'}), response=>{ Object.assign(commands, response) })
+		chrome.runtime.sendMessage(Object.assign(options, {
+			action:'getSetupTree'
+		}), response=>{ Object.assign(commands, response) })
+		chrome.runtime.sendMessage(Object.assign(options, {
+			action:'getMetadata'
+		}), response=>{ Object.assign(commands, response) })
+		chrome.runtime.sendMessage(Object.assign(options, {
+			action:'getCustomObjects'
+		}), response=>{ Object.assign(commands, response) })
 		hideLoadingIndicator()
 	}
 	function invokeCommand(cmd, newTab, event) {
@@ -65,6 +71,7 @@ var sfnav = (()=>{
 		}
 		if(checkCmd.substring(0,9) == 'login as ') { loginAs(cmd, newTab); return true }
 		else if(checkCmd.substring(0,14) == "merge accounts") { launchMergerAccounts(cmd.substring(14).trim()) }
+		else if(checkCmd.substring(0,14) == "merge contacts") { launchMergerContacts(cmd.substring(14).trim()) }
 		// else if(checkCmd.substring(0,11) == "merge cases") { launchMergerCases(cmd.substring(11).trim()) } //TODO more complicated merge call, will make later
 		else if(checkCmd.substring(0,1) == "!") { createTask(cmd.substring(1).trim()) }
 		else if(checkCmd.substring(0,1) == "?") { targetUrl = searchTerms(cmd.substring(1).trim()) }
@@ -82,16 +89,17 @@ var sfnav = (()=>{
 			return true
 		} else { return false }
 	}
-	var goToUrl = function(url, newTab) { chrome.runtime.sendMessage({ action: 'goToUrl', url: url, newTab: newTab } , function(response) {}) }
-	var searchTerms =function (terms) {
-		var targetUrl = serverInstance
+	const goToUrl = (url, newTab) => { chrome.runtime.sendMessage({
+		action: 'goToUrl', url: url, newTab: newTab
+	} , response=>{}) }
+	const searchTerms = terms => {
+		let targetUrl = 
 		if(serverInstance.includes('.force.com'))
-			targetUrl += "/one/one.app#" + btoa(JSON.stringify({"componentDef":"forceSearch:search","attributes":{"term": terms,"scopeMap":{"type":"TOP_RESULTS"},"context":{"disableSpellCorrection":false,"SEARCH_ACTIVITY":{"term": terms}}}}))
+			return serverInstance + "/one/one.app#" + btoa(JSON.stringify({"componentDef":"forceSearch:search","attributes":{"term": terms,"scopeMap":{"type":"TOP_RESULTS"},"context":{"disableSpellCorrection":false,"SEARCH_ACTIVITY":{"term": terms}}}}))
 		else
-			targetUrl += "/_ui/search/ui/UnifiedSearchResults?sen=ka&sen=500&str=" + encodeURI(terms) + "#!/str=" + encodeURI(terms) + "&searchAll=true&initialViewMode=summary"
-		return targetUrl
+			return serverInstance + "/_ui/search/ui/UnifiedSearchResults?sen=ka&sen=500&str=" + encodeURI(terms) + "#!/str=" + encodeURI(terms) + "&searchAll=true&initialViewMode=summary"
 	}
-	var pasteFromClipboard = (newtab)=>{
+	const pasteFromClipboard = newtab =>{
 		let cb = document.createElement("textarea")
 		let body = document.getElementsByTagName('body')[0]
 		body.appendChild(cb)
@@ -101,19 +109,19 @@ var sfnav = (()=>{
 		cb.remove()
 		return clipboardValue
 	}
-	var getIdFromUrl = ()=>{
+	const getIdFromUrl = ()=>{
 		const url = document.location.href
 		const ID_RE = [
 			/http[s]?\:\/\/.*force\.com\/.*([a-zA-Z0-9]{18})[^\w]*/, // tries to find the first 18 digit
 			/http[s]?\:\/\/.*force\.com\/.*([a-zA-Z0-9]{15})[^\w]*/ // falls back to 15 digit
 		]
-		for(var i in ID_RE) {
-			var match = url.match(ID_RE[i])
+		for(let i in ID_RE) {
+			let match = url.match(ID_RE[i])
 			if (match != null) { return match[1] }
 		}
 		return false
 	}
-	var launchMerger = function(otherId, object) {
+	const launchMerger = (otherId, object)=>{
 		if(!otherId)
 			otherId = pasteFromClipboard()
 		if(![15,18].includes(otherId.length)) {
@@ -126,6 +134,9 @@ var sfnav = (()=>{
 			switch(object) {
 				case 'Account':
 					document.location.href = `${serverInstance}/merge/accmergewizard.jsp?goNext=+Next+&cid=${otherId}&cid=${thisId}`
+					break
+				case 'Contact':
+					document.location.href = `${serverInstance}/merge/conmergewizard.jsp?goNext=+Next+&cid=${otherId}&cid=${thisId}`
 					break
 				case 'Case':
 					//TODO - needs to be a post request, so fetch or background will have to happen here
@@ -146,9 +157,10 @@ var sfnav = (()=>{
 					break
 			}
 	}
-	var launchMergerAccounts = (otherId)=>launchMerger(otherId, 'Account')
-	var launchMergerCases = (otherId)=>launchMerger(otherId, 'Case')
-	var createTask = function(subject) {
+	const launchMergerAccounts = otherId => launchMerger(otherId, 'Account')
+	const launchMergerContacts = otherId => launchMerger(otherId, 'Contact')
+	const launchMergerCases = otherId => launchMerger(otherId, 'Case')
+	const createTask = subject => {
 		showLoadingIndicator()
 		if(subject != "" && userId) {
 			chrome.runtime.sendMessage({
@@ -157,21 +169,21 @@ var sfnav = (()=>{
 					domain: serverInstance, sessionHash: sessionHash,
 					subject: subject, userId: userId
 				}, response=>{
-				if(response.errors.length == 0) {
-					clearOutput()
-					commands["Go To Created Task"] = {url: serverInstance + "/"+ response.id }
-					document.getElementById("sfnav_quickSearch").value = ""
-					addWord('Go To Created Task')
-					addWord('(press escape to exit or enter a new command)')
-					let firstEl = document.querySelector('#sfnav_output :first-child')
-					if(listPosition == -1 && firstEl != null)
-						firstEl.className = "sfnav_child sfnav_selected"
-					hideLoadingIndicator()
-				}
+					if(response.errors.length == 0) {
+						clearOutput()
+						commands["Go To Created Task"] = {url: serverInstance + "/"+ response.id }
+						document.getElementById("sfnav_quickSearch").value = ""
+						addWord('Go To Created Task')
+						addWord('(press escape to exit or enter a new command)')
+						let firstEl = document.querySelector('#sfnav_output :first-child')
+						if(listPosition == -1 && firstEl != null)
+							firstEl.className = "sfnav_child sfnav_selected"
+						hideLoadingIndicator()
+					}
 			})
 		}
 	}
-	function loginAs(cmd, newTab) {
+	const loginAs = (cmd, newTab) => {
 		let cmdSplit = cmd.split(' ')
 		let searchValue = cmdSplit[2]
 		if(cmdSplit[3] !== undefined)
@@ -183,18 +195,18 @@ var sfnav = (()=>{
 			domain: serverInstance, sessionHash: sessionHash,
 			searchValue: searchValue, userId: userId
 		}, success=>{
-			let numberOfUserRecords = success.records.length
+			const numberOfUserRecords = success.records.length
 			hideLoadingIndicator()
-			if(numberOfUserRecords < 1) { addError([{"message":"No user for your search exists."}]) }
-			else if(numberOfUserRecords > 1) { loginAsShowOptions(success.records) }
-			else {
-				var userId = success.records[0].Id
-				loginAsPerform(userId, newTab)
-			}
+			if(numberOfUserRecords < 1)
+				addError([{"message":"No user for your search exists."}])
+			else if(numberOfUserRecords > 1) 
+				loginAsShowOptions(success.records)
+			else
+				loginAsPerform( success.records[0].Id, newTab)
 		})
 	}
 	function loginAsShowOptions(records) {
-		for(let i = 0; i < records.length; ++i) {
+		for(let i = records.length; i >= 1; --i) {
 			let cmd = 'Login As ' + records[i].Name
 			commands[cmd] = {key: cmd, id: records[i].Id}
 			addWord(cmd)
@@ -203,10 +215,12 @@ var sfnav = (()=>{
 		if(listPosition == -1 && firstEl != null) firstEl.className = "sfnav_child sfnav_selected"
 	}
 	function loginAsPerform(userId, newTab) {
-		let targetUrl = "https://" + apiUrl + "/servlet/servlet.su?oid=" + orgId + "&suorgadminid=" + userId + "&retURL=" + encodeURIComponent(window.location.pathname) + "&targetURL=" + encodeURIComponent(window.location.pathname) + "&"
 		hideSearchBox()
-		if(newTab) goToUrl(targetUrl, true)
-		else goToUrl(targetUrl)
+		goToUrl("https://" + apiUrl + "/servlet/servlet.su?oid=" + orgId
+			+ "&suorgadminid=" + userId
+			+ "&retURL=" + encodeURIComponent(window.location.pathname)
+			+ "&targetURL=" + encodeURIComponent(window.location.pathname) + "&"
+		, newTab)
 		return true
 	}
 
@@ -228,12 +242,12 @@ var sfnav = (()=>{
 		}
 		return Mousetrap
 	})(Mousetrap)
-	var mouseHandler = function() {
+	const mouseHandler = function () {
 		this.classList.add('sfnav_selected')
 		mouseClickLoginAsUserId = this.getAttribute("id")
 		return true
 	}
-	var mouseClick = function() {
+	const mouseClick = function() {
 		document.getElementById("sfnav_quickSearch").value = this.firstChild.nodeValue
 		listPosition = -1
 		setVisibleSearch("hidden")
@@ -243,15 +257,14 @@ var sfnav = (()=>{
 			hideSearchBox()
 		return true
 	}
-	var mouseHandlerOut = function() { this.classList.remove('sfnav_selected'); return true }
-	var mouseClickLoginAs = function() { loginAsPerform(mouseClickLoginAsUserId); return true }
-	function bindShortcuts() {
+	const mouseHandlerOut = function() { this.classList.remove('sfnav_selected'); return true }
+	const mouseClickLoginAs = function() { loginAsPerform(mouseClickLoginAsUserId); return true }
+	const bindShortcuts = function() {
 		let searchBar = document.getElementById('sfnav_quickSearch')
 		Mousetrap.bindGlobal('esc', function(e) { hideSearchBox() })
 		Mousetrap.wrap(searchBar).bind('enter', kbdCommand)
-		for (var i = 0; i < newTabKeys.length; i++) {
+		for(let i = newTabKeys.length; i >= 1; --i) // TODO verify this is using the right lower limit
 			Mousetrap.wrap(searchBar).bind(newTabKeys[i], kbdCommand)
-		}
 		Mousetrap.wrap(searchBar).bind('down', selectMove.bind(this, 'down'))
 		Mousetrap.wrap(searchBar).bind('up', selectMove.bind(this, 'up'))
 		Mousetrap.wrap(document.getElementById('sfnav_quickSearch')).bind('backspace', function(e) { listPosition = -1 })
@@ -264,100 +277,110 @@ var sfnav = (()=>{
 // interface
 	function showLoadingIndicator() { document.getElementById('sfnav_loader').style.visibility = 'visible' }
 	function hideLoadingIndicator() { document.getElementById('sfnav_loader').style.visibility = 'hidden' }
-	var hideSearchBox = function() {
+	const hideSearchBox = ()=>{
 		let searchBar = document.getElementById('sfnav_quickSearch')
 		searchBar.blur()
 		clearOutput()
 		searchBar.value = ''
 		setVisibleSearch("hidden")
 	}
-	function setVisibleSearch(visibility) {
+	const setVisibleSearch = visibility => {
 		let searchBox = document.getElementById("sfnav_searchBox")
 		if(visibility == "hidden") {
 			searchBox.style.opacity = 0
 			searchBox.style.zIndex = -1
-		}
-		else {
+		} else {
 			searchBox.style.opacity = 0.98
 			searchBox.style.zIndex = 9999
 			document.getElementById("sfnav_quickSearch").focus()
 		}
 	}
-	function lookAt() {
-		let newSearchVal = document.getElementById('sfnav_quickSearch').value
-		if(newSearchVal !== '') addElements(newSearchVal)
+	const lookAt = ()=>{
+		const newSearchVal = document.getElementById('sfnav_quickSearch').value
+		if(newSearchVal !== '')
+			addElements(newSearchVal)
 		else {
 			document.querySelector('#sfnav_output').innerHTML = ''
 			listPosition = -1
 		}
 	}
-	function addElements(input) {
+	const addElements = input => {
 		clearOutput()
-		if(input.substring(0,1) == "?") addWord('Global Search Usage: ? <Search term(s)>')
-		else if(input.substring(0,1) == "!") addWord('Create a Task: ! <Subject line>')
+		if(input[0] === "?") addWord('Global Search Usage: ? <Search term(s)>')
+		else if(input[0] === "!") addWord('Create a Task: ! <Subject line>')
 		else {
 			let words = getWord(input, commands)
 			if(words.length > 0)
-			for (var i=0;i < words.length; ++i)
-			addWord(words[i])
+				for (let i = words.length;i >= 1; --i)
+					addWord(words[i])
 			else
-			listPosition = -1
+				listPosition = -1
 		}
-		if ('login as'.includes(input.toLowerCase())) addWord('Usage: login as <FirstName> <LastName> OR <Username>')
+		if('login as'.includes(input.toLowerCase()))
+			addWord('Usage: login as <FirstName> <LastName> OR <Username>')
 		let firstEl = document.querySelector('#sfnav_output :first-child')
-		if(listPosition == -1 && firstEl != null) firstEl.className = "sfnav_child sfnav_selected"
+		if(listPosition == -1 && firstEl != null)
+			firstEl.className = "sfnav_child sfnav_selected"
 	}
-	var getWord = function(input, dict) {
-		if(typeof input === 'undefined' || input == '') return []
+	const getWord = (input, wordList)=>{
+		if(typeof input === 'undefined' || input === '') return []
 		let foundCommands = [],
-			dictItems = [],
+			listItems = [],
 			terms = input.toLowerCase().split(" ")
-		for (var key in dict) {
-			if(dictItems.length > 10) break // stop at 10 since we can't see longer than that anyways - should make this a setting
+		for(let key in wordList) {
+			if(listItems.length > 10) break // stop at 10 since we can't see longer than that anyways - should make this a setting
 			if(key.toLowerCase().indexOf(input) != -1) {
-				dictItems.push({num: 10, key: key})
+				listItems.push({num: 10, key: key})
 			} else {
-				let match = 0
-				for(var i = 0;i<terms.length;i++) {
+				let match = false
+		// TODO the logic here seems flawed, like it should increment the sortValue so that the higher number of matches the great the value
+				let sortValue = 0
+				for(let i = terms.length;i >= 0; --i) {
 					if(key.toLowerCase().indexOf(terms[i]) != -1) {
-						match++
-						sortValue = 1
+						// match++
+						match = true
+						// sortValue = 1
+						sortValue++
 					}
 				}
-				if (match == terms.length)
-					dictItems.push({num : sortValue, key : key})
+		// and this part should use a match > 0 and then the adjusted sortValue
+				// if (match == terms.length)
+				if (match)
+					listItems.push({num : sortValue, key : key})
 			}
 		}
-		dictItems.sort(function(a,b) { return b.num - a.num })
-		for(var i = 0;i < dictItems.length;i++)
-			foundCommands.push(dictItems[i].key)
+		listItems.sort((a,b)=>{ return b.num > a.num ? -1 : 1 }) // need to verify this sorting method
+		for(var i = listItems.length;i >= 0; --i)
+			foundCommands.push(listItems[i].key)
 		return foundCommands
 	} 
-	function addWord(word) {
-		var d = document.createElement("div")
-		var sp
+	const addWord = word => {
+		let d = document.createElement("div")
+		let newCommand
 		if(commands[word] != null && commands[word].url != null && commands[word].url != "") {
-			sp = document.createElement("a")
+			newCommand = document.createElement("a")
 			if(commands[word].url.startsWith('//'))
 				commands[word].url = commands[word].url.replace('//','/')
-			sp.setAttribute("href", commands[word].url)
-		} else { sp = d }
-		if(commands[word] != null && commands[word].id != null && commands[word].id != "") { sp.id = commands[word].id }
-		sp.classList.add('sfnav_child')
-		sp.appendChild(document.createTextNode(word))
-		sp.onmouseover = mouseHandler
-		sp.onmouseout = mouseHandlerOut
-		sp.onclick = mouseClick
-		if(sp.id && sp.length > 0) { sp.onclick = mouseClickLoginAs }
-		searchBox.appendChild(sp)
+			newCommand.setAttribute("href", commands[word].url)
+		} else { newCommand = d }
+		if(commands[word] != null && commands[word].id != null && commands[word].id != "")
+			newCommand.id = commands[word].id
+		newCommand.classList.add('sfnav_child')
+		newCommand.appendChild(document.createTextNode(word))
+		newCommand.onmouseover = mouseHandler
+		newCommand.onmouseout = mouseHandlerOut
+		newCommand.onclick = mouseClick
+		if(newCommand.id && newCommand.length > 0) // TODO huh? is there some other check I should do?
+			newCommand.onclick = mouseClickLoginAs
+		searchBox.appendChild(newCommand)
 	}
-	function addError(text) {
+	const addError = text => {
 		clearOutput()
 		let err = document.createElement("div")
 		err.className = "sfnav_child sfnav-error-wrapper"
 		err.appendChild(document.createTextNode('Error! '))
 		err.appendChild(document.createElement('br'))
-		for(var i = 0;i<text.length;i++) {
+		for(var i = text.length;i >= 0;--i) {
 			err.appendChild(document.createTextNode(text[i].message))
 			err.appendChild(document.createElement('br'))
 		}
