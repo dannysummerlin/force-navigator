@@ -32,6 +32,10 @@ var sfnav = (()=>{
 		commands['Setup'] = {}
 		commands['Merge Accounts'] = {}
 		commands['Toggle All Checkboxes'] = {}
+		if(sessionSettings.lightningMode)
+			commands['Switch to Classic'] = {}
+		else
+			commands['Switch to Lightning'] = {}
 		commands['Toggle Lightning'] = {}
 		commands['Object Manager'] = {}
 		commands['Toggle Enhanced Profiles'] = {}
@@ -43,6 +47,7 @@ var sfnav = (()=>{
 			domain: serverInstance,
 			apiUrl: apiUrl,
 			key: sessionHash,
+			lightningMode: sessionSettings.lightningMode,
 			settings: settings,
 			force: force,
 			sessionId: sessionId
@@ -84,6 +89,8 @@ var sfnav = (()=>{
 			case "object manager":
 				targetUrl = serverInstance + "/lightning/setup/ObjectManager/home"
 				break
+			case "switch to classic":
+			case "switch to lightning":
 			case "toggle lightning":
 				let mode
 				if(window.location.href.includes("lightning.force")) {
@@ -127,7 +134,7 @@ var sfnav = (()=>{
 				return true
 				break
 			case "setup":
-				if(serverInstance.includes("lightning.force"))
+				if(sessionSettings.lightningMode)
 					targetUrl = serverInstance + "/lightning/setup/SetupOneHome/home"
 				else
 					targetUrl = serverInstance + "/ui/setup/Setup"
@@ -163,21 +170,23 @@ var sfnav = (()=>{
 		else if(checkCmd.substring(0,14) == "merge accounts") { launchMergerAccounts(cmd.substring(14).trim()) }
 		else if(checkCmd.substring(0,1) == "!") { createTask(cmd.substring(1).trim()) }
 		else if(checkCmd.substring(0,1) == "?") { targetUrl = searchTerms(cmd.substring(1).trim()) }
-		else if(typeof commands[cmd] != 'undefined' && commands[cmd].url) { targetUrl = commands[cmd].url }
+		else if(typeof commands[cmd] != 'undefined' && commands[cmd].url) {
+			targetUrl = commands[cmd].url
+		}
 		else if(sessionSettings.debug && !checkCmd.includes("create a task: !") && !checkCmd.includes("global search usage")) {
 			console.log(cmd + " not found in command list or incompatible")
 			return false
 		}
 		if(targetUrl != "") {
 			hideSearchBox()
-			goToUrl(targetUrl, newTab, {cmd: cmd})
+			goToUrl(targetUrl, newTab)
 			return true
 		} else {
 			console.debug('No command match', cmd)
 			return false
 		}
 	}
-	var goToUrl = function(url, newTab, settings) { chrome.runtime.sendMessage({ action: 'goToUrl', url: url, newTab: newTab, settings: Object.assign(settings, {serverInstance: serverInstance, lightningMode: sessionSettings.lightningMode}) } , function(response) {}) }
+	var goToUrl = function(url, newTab, settings = {}) { chrome.runtime.sendMessage({ action: 'goToUrl', url: url, newTab: newTab, settings: Object.assign(settings, {serverInstance: serverInstance, lightningMode: sessionSettings.lightningMode}) } , function(response) {}) }
 	var searchTerms = function (terms) {
 		var targetUrl = serverInstance
 		if(serverInstance.includes('.force.com'))
@@ -511,10 +520,10 @@ var sfnav = (()=>{
 			document.onkeyup = (ev)=>{ window.ctrlKey = ev.ctrlKey }
 			document.onkeydown = (ev)=>{ window.ctrlKey = ev.ctrlKey }
 			orgId = document.cookie.match(/sid=([\w\d]+)/)[1]
-			serverInstance = getServerInstance()
 			sessionHash = getSessionHash()
 			chrome.storage.sync.get(sessionSettings, settings=> {
 				sessionSettings = settings
+				serverInstance = getServerInstance(sessionSettings)
 				let theme = settings.theme
 				var div = document.createElement('div')
 				div.setAttribute('id', 'sfnav_styleBox')

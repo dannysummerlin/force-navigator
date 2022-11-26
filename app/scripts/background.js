@@ -42,10 +42,11 @@ var getOtherExtensionCommands = (otherExtension, requestDetails, settings = {}, 
 		})
 	}
 }
-var parseSetupTree = (response, url, settings = {})=>{
+var parseSetupTree = (response, url, settings)=>{
 	let commands = {}
+	if(typeof settings == 'undefined') { settings = {} }
 	let strNameMain, strName
-	const lightningMode = settings.lightningMode || url.includes("lightning.force")
+	const lightningMode = settings.lightningMode || url.includes("lightning.")
 	;[].map.call(response.querySelectorAll('.setupLeaf > a[id*="_font"]'), function(item) {
 		let hasTopParent = false, hasParent = false
 		let parent, topParent, parentEl, topParentEl
@@ -71,7 +72,7 @@ var parseSetupTree = (response, url, settings = {})=>{
 				targetUrl = url + '/lightning/setup/ObjectManager/OpportunityLineItem/FieldsAndRelationships/view'
 			if(Object.keys(setupLabelsToLightningMap).includes(item.innerText)) {
 				targetUrl = url + setupLabelsToLightningMap[item.innerText]
-				delete setupLabelsToLightningMap[item.innerText]
+				delete setupLabelsToLightningMap[item.innerText] // maybe part of the problem
 			}
 			if(strNameMain.includes("Customize") && Object.keys(classicToLightningMap).includes(item.innerText)) {
 				let objectLabel = pluralize(parent, 1) // need to add developerName handling for standard objects
@@ -90,19 +91,20 @@ var parseSetupTree = (response, url, settings = {})=>{
 			}
 		}
 		if(targetUrl.includes('-extension')) {
+			const re = new RegExp("\\w+-extension:\/\/"+chrome.runtime.id,"g");
+			targetUrl = targetUrl.replace(re,'')
 			targetUrl = targetUrl.replace(item.origin,'')
 		}
-		if(commands[strName] == null) commands[strName] = {url: targetUrl, key: strName}
+		// add Lightning direct links
+		if(lightningMode) {
+			Object.keys(setupLabelsToLightningMap).forEach(k => {
+				if(commands[k] == null) { commands[k] = {
+					url: url + setupLabelsToLightningMap[k],
+					key: k
+				}}
+			})
+		}
 	})
-	// add Lightning direct links
-	if(lightningMode) {
-		Object.keys(setupLabelsToLightningMap).forEach(k => {
-			if(commands[k] == null) { commands[k] = {
-				url: url + setupLabelsToLightningMap[k],
-				key: k
-			}}
-		})
-	}
 	return commands
 }
 var parseMetadata = (data, url, settings = {})=>{
@@ -147,15 +149,10 @@ var goToUrl = (targetUrl, newTab, settings)=>{
 		targetUrl = targetUrl.replace(re,'')
 		let newUrl = targetUrl.match(/.*?\.com(.*)/)
 		newUrl = newUrl ? newUrl[1] : targetUrl
-console.log(targetUrl,settings,setupLabelsToLightningMap[settings.cmd])
+		if(settings.lightningMode && newUrl.includes('InteractionProcesses')) // manual fix for strange Flow classic problem
+			newUrl = '/lightning/setup/Flows/home'
 		if(!targetUrl.includes('-extension:'))
 			newUrl = tabs[0].url.match(/.*?\.com/)[0] + newUrl
-		else if(settings.lightningMode && !targetUrl.includes('lightning')) {
-			cmd = settings.cmd.replace("Setup > Create > Workflow & Approvals > ","")
-			cmd = cmd.replace("Setup ","")
-			console.log(targetUrl,settings,setupLabelsToLightningMap[cmd])
-			newUrl = setupLabelsToLightningMap[cmd]
-		}
 		else
 			newUrl = targetUrl
 		if(newTab)
@@ -199,6 +196,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse)=>{
 				else sendResponse({error: "No session data found for " + request.key})
 			})
 		} else sendResponse({error: "Must include orgId"})
+	}
+	if(request.sessionId) { // gets changed in transit sometimes, trying to catch
+		const sessionHash = request.sessionId.match(/(\w{15})!(\w{12})([\dA-Za-z]+)/)
+		request.sessionHash = sessionHash[1]+'!'+sessionHash[3]
+		request.key = request.sessionHash
 	}
 	switch(request.action) {
 		case 'goToUrl': goToUrl(request.url, request.newTab, request.settings); break

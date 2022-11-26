@@ -1,15 +1,22 @@
-var getServerInstance = ()=>{
+var getServerInstance = (sessionSettings)=>{
 	let targetUrl
 	let url = location.origin + ""
-	if(url.indexOf("lightning.force") != -1)
-		targetUrl = url.substring(0, url.indexOf("lightning.force")) + "lightning.force.com"
-	else if(url.indexOf("salesforce") != -1)
-		targetUrl = url.substring(0, url.indexOf("salesforce")) + "salesforce.com"
-	else if(url.indexOf("cloudforce") != -1)
-		targetUrl = url.substring(0, url.indexOf("cloudforce")) + "cloudforce.com"
-	else if(url.indexOf("visual.force") != -1) {
-		let urlParseArray = url.split(".")
-		targetUrl = 'https://' + urlParseArray[1] + ''
+	if(sessionSettings.lightningMode && !url.includes('lightning')) {
+		if(url.includes('.my.'))
+			targetUrl = url.substring(0, url.indexOf("my.salesforce")) + "lightning.force.com"
+		else
+			targetUrl = url.substring(0, url.indexOf("salesforce")) + "lightning.force.com"
+	} else {
+		if(url.indexOf("lightning.force") != -1)
+			targetUrl = url.substring(0, url.indexOf("lightning.force")) + "lightning.force.com"
+		else if(url.indexOf("salesforce") != -1)
+			targetUrl = url.substring(0, url.indexOf("salesforce")) + "salesforce.com"
+		else if(url.indexOf("cloudforce") != -1)
+			targetUrl = url.substring(0, url.indexOf("cloudforce")) + "cloudforce.com"
+		else if(url.indexOf("visual.force") != -1) {
+			let urlParseArray = url.split(".")
+			targetUrl = 'https://' + urlParseArray[1] + ''
+		}
 	}
 	return targetUrl
 }
