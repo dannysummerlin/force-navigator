@@ -10,10 +10,10 @@ var showElement = (element)=>{
 				break
 			case "searchBox":
 				chrome.tabs.executeScript(tabs[0].id, {code: `
-					if(document.getElementById("sfnav_searchBox")) {
-						document.getElementById("sfnav_searchBox").style.zIndex = 9999
-						document.getElementById("sfnav_searchBox").style.opacity = 0.98
-						document.getElementById("sfnav_quickSearch").focus()
+					if(document.getElementById("sfNavSearchBox")) {
+						document.getElementById("sfNavSearchBox").style.zIndex = 9999
+						document.getElementById("sfNavSearchBox").style.opacity = 0.98
+						document.getElementById("sfNavQuickSearch").focus()
 					}
 				`})
 				break

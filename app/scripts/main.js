@@ -78,7 +78,7 @@ console.log('o', options)
 		showLoadingIndicator()
 		serverInstance = getServerInstance(sessionSettings)
 		loadCommands(sessionSettings, true)
-		document.getElementById("sfnav_quickSearch").value = ""
+		document.getElementById("sfNavQuickSearch").value = ""
 	}
 	function invokeCommand(cmd, newTab, event) {
 		if(cmd == "") { return false }
@@ -251,10 +251,10 @@ console.log('o', options)
 				if(response.errors.length == 0) {
 					clearOutput()
 					commands["Go To Created Task"] = {url: serverInstance + "/"+ response.id }
-					document.getElementById("sfnav_quickSearch").value = ""
+					document.getElementById("sfNavQuickSearch").value = ""
 					addWord('Go To Created Task')
 					addWord('(press escape to exit or enter a new command)')
-					let firstEl = document.querySelector('#sfnav_output :first-child')
+					let firstEl = document.querySelector('#sfNavOutput :first-child')
 					if(listPosition == -1 && firstEl != null)
 						firstEl.className = "sfnav_child sfnav_selected"
 					hideLoadingIndicator()
@@ -267,7 +267,7 @@ console.log('o', options)
 		let cmdSplit = cmd.split(' ')
 		const newTheme = 'theme-' + cmdSplit[2].toLowerCase()
 		document.getElementById('sfnav_styleBox').classList = [newTheme]
-		chrome.storage.sync.set({theme: newTheme}, response=>{ sessionSettings.theme = newTheme; document.getElementById('sfnav_quickSearch').value = '' })
+		chrome.storage.sync.set({theme: newTheme}, response=>{ sessionSettings.theme = newTheme; document.getElementById('sfNavQuickSearch').value = '' })
 	}
 
 // login as
@@ -299,7 +299,7 @@ console.log('o', options)
 			commands[cmd] = {key: cmd, id: records[i].Id}
 			addWord(cmd)
 		}
-		let firstEl = document.querySelector('#sfnav_output :first-child')
+		let firstEl = document.querySelector('#sfNavOutput :first-child')
 		if(listPosition == -1 && firstEl != null) firstEl.className = "sfnav_child sfnav_selected"
 	}
 	function loginAsPerform(userId, newTab) {
@@ -334,7 +334,7 @@ console.log('o', options)
 		return true
 	}
 	var mouseClick = function() {
-		document.getElementById("sfnav_quickSearch").value = this.firstChild.nodeValue
+		document.getElementById("sfNavQuickSearch").value = this.firstChild.nodeValue
 		listPosition = -1
 		setVisibleSearch("hidden")
 		if(!window.ctrlKey)
@@ -346,7 +346,7 @@ console.log('o', options)
 	var mouseHandlerOut = function() { this.classList.remove('sfnav_selected'); return true }
 	var mouseClickLoginAs = function() { loginAsPerform(mouseClickLoginAsUserId); return true }
 	function bindShortcuts() {
-		let searchBar = document.getElementById('sfnav_quickSearch')
+		let searchBar = document.getElementById('sfNavQuickSearch')
 		Mousetrap.bindGlobal('esc', function(e) { hideSearchBox() })
 		Mousetrap.wrap(searchBar).bind('enter', kbdCommand)
 		for (var i = 0; i < newTabKeys.length; i++) {
@@ -354,25 +354,25 @@ console.log('o', options)
 		}
 		Mousetrap.wrap(searchBar).bind('down', selectMove.bind(this, 'down'))
 		Mousetrap.wrap(searchBar).bind('up', selectMove.bind(this, 'up'))
-		Mousetrap.wrap(document.getElementById('sfnav_quickSearch')).bind('backspace', function(e) { listPosition = -1 })
-		document.getElementById('sfnav_quickSearch').oninput = function(e) {
+		Mousetrap.wrap(document.getElementById('sfNavQuickSearch')).bind('backspace', function(e) { listPosition = -1 })
+		document.getElementById('sfNavQuickSearch').oninput = function(e) {
 			lookAt()
 			return true
 		}
 	}
 
 // interface
-	function showLoadingIndicator() { document.getElementById('sfnav_loader').style.visibility = 'visible' }
-	function hideLoadingIndicator() { document.getElementById('sfnav_loader').style.visibility = 'hidden' }
+	function showLoadingIndicator() { document.getElementById('sfNavLoader').style.visibility = 'visible' }
+	function hideLoadingIndicator() { document.getElementById('sfNavLoader').style.visibility = 'hidden' }
 	var hideSearchBox = function() {
-		let searchBar = document.getElementById('sfnav_quickSearch')
+		let searchBar = document.getElementById('sfNavQuickSearch')
 		searchBar.blur()
 		clearOutput()
 		searchBar.value = ''
 		setVisibleSearch("hidden")
 	}
 	function setVisibleSearch(visibility) {
-		let searchBox = document.getElementById("sfnav_searchBox")
+		let searchBox = document.getElementById("sfNavSearchBox")
 		if(visibility == "hidden") {
 			searchBox.style.opacity = 0
 			searchBox.style.zIndex = -1
@@ -380,14 +380,14 @@ console.log('o', options)
 		else {
 			searchBox.style.opacity = 0.98
 			searchBox.style.zIndex = 9999
-			document.getElementById("sfnav_quickSearch").focus()
+			document.getElementById("sfNavQuickSearch").focus()
 		}
 	}
 	function lookAt() {
-		let newSearchVal = document.getElementById('sfnav_quickSearch').value
+		let newSearchVal = document.getElementById('sfNavQuickSearch').value
 		if(newSearchVal !== '') addElements(newSearchVal)
 		else {
-			document.querySelector('#sfnav_output').innerHTML = ''
+			document.querySelector('#sfNavOutput').innerHTML = ''
 			listPosition = -1
 		}
 	}
@@ -403,7 +403,7 @@ console.log('o', options)
 			else
 			listPosition = -1
 		}
-		let firstEl = document.querySelector('#sfnav_output :first-child')
+		let firstEl = document.querySelector('#sfNavOutput :first-child')
 		if(listPosition == -1 && firstEl != null) firstEl.className = "sfnav_child sfnav_selected"
 	}
 	var getWord = function(input, dict) {
@@ -480,7 +480,7 @@ console.log('o', options)
 		let position = listPosition
 		let origText = '', newText = ''
 		if(position < 0) position = 0
-			origText = document.getElementById("sfnav_quickSearch").value
+			origText = document.getElementById("sfNavQuickSearch").value
 		if(typeof searchBox.childNodes[position] != 'undefined')
 			newText = searchBox.childNodes[position].firstChild.nodeValue
 		let newTab = newTabKeys.indexOf(key) >= 0 ? true : false
@@ -490,7 +490,7 @@ console.log('o', options)
 			invokeCommand(origText, newTab)
 	}
 	function selectMove(direction) {
-		let searchBar = document.getElementById('sfnav_quickSearch')
+		let searchBar = document.getElementById('sfNavQuickSearch')
 		let firstChild
 		let words = []
 		for (var i = 0; i < searchBox.childNodes.length; i++)
@@ -533,18 +533,18 @@ console.log('o', options)
 				var loaderURL = chrome.extension.getURL("images/ajax-loader.gif")
 				var logoURL = chrome.extension.getURL("images/sf-navigator128.png")
 				div.innerHTML = `
-<div id="sfnav_searchBox">
-	<div class="sfnav_wrapper">
-		<input type="text" id="sfnav_quickSearch" autocomplete="off"/>
-		<img id="sfnav_loader" src= "${loaderURL}"/>
+<div id="sfNavSearchBox">
+	<div class="sfNavWrapper">
+		<input type="text" id="sfNavQuickSearch" autocomplete="off"/>
+		<img id="sfNavLoader" src= "${loaderURL}"/>
 		<img id="sfnav_logo" src= "${logoURL}"/>
 	</div>
-	<div class="sfnav_shadow" id="sfnav_shadow"/>
-	<div class="sfnav_output" id="sfnav_output"/>
+	<div class="sfNavShadow" id="sfNavShadow"/>
+	<div class="sfNavOutput" id="sfNavOutput"/>
 </div>
 `
 				document.body.appendChild(div)
-				searchBox = document.getElementById("sfnav_output")
+				searchBox = document.getElementById("sfNavOutput")
 				if(sessionId == null) {
 					chrome.runtime.sendMessage({ action: 'getApiSessionId', key: orgId }, response=>{
 						if(response.error) console.log("response", orgId, response, chrome.runtime.lastError)
