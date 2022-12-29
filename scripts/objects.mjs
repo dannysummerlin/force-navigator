@@ -1,38 +1,97 @@
-// object handling
-export const fieldTypeData = (type, labelArray) => {
-	switch(type.toUpperCase()) {
-		case 'AUTONUMBER':
-		case 'CHECKBOX':
-		case 'DATE':
-		case 'DATETIME':
-		case 'EMAIL':
-		case 'PHONE':
-		case 'PICKLIST':
-		case 'PICKLISTMS':
-		case 'URL':
-			return (labelArray[0] + ' ' + labelArray[1] + ' ' + labelArray[2] + ' ' + type)
-			break
-		case 'CURRENCY':
-		case 'NUMBER':
-		case 'PERCENT':
-			return (labelArray[0] + ' ' + labelArray[1] + ' ' + labelArray[2] + ' ' + words[i] + ' <scale> <precision>') 
-			break
-		case 'GEOLOCATION':
-			return (labelArray[0] + ' ' + labelArray[1] + ' ' + labelArray[2] + ' ' + words[i] + ' <scale>')
-			break
-		case 'LOOKUP':
-			return (labelArray[0] + ' ' + labelArray[1] + ' ' + labelArray[2] + ' ' + words[i] + ' <lookup sObjectName>')
-			break
-		case 'TEXT':
-		case 'TEXTAREA':
-			return (labelArray[0] + ' ' + labelArray[1] + ' ' + labelArray[2] + ' ' + words[i] + ' <length>')
-			break
-		case 'TEXTAREALONG':
-		case 'TEXTAREARICH':
-			return (labelArray[0] + ' ' + labelArray[1] + ' ' + labelArray[2] + ' ' + words[i] + ' <length> <visible lines>')
-			break
-		default:
-			return null
-			break
+export const getAllObjectMetadata = () => {
+	sid = "Bearer " + getCookie('sid')
+		var theurl = getServerInstance() + '.salesforce.com/services/data/' + SFAPI_VERSION + '/sobjects/'
+		cmds['Refresh Metadata'] = {}
+		cmds['Setup'] = {}
+		var req = new XMLHttpRequest()
+		req.open("GET", theurl, true)
+		req.setRequestHeader("Authorization", sid)
+		req.onload = function(response) {
+		 getMetadata(response.target.responseText)
+	 }
+	 req.send()
+	 getSetupTree()
+	 getCustomObjects()
+	 getCustomObjectsDef()
+}
+export const parseSetupTree = (html) => {
+		var allLinks = html.getElementById('setupNavTree').getElementsByClassName("parent")
+		var strName
+		var as
+		var strNameMain
+		var strName
+		for(var i = 0; i<allLinks.length;i++) {
+			var as = allLinks[i].getElementsByTagName("a")
+			for(var j = 0;j<as.length;j++) {
+				if(as[j].id.indexOf("_font") != -1) {
+					strNameMain = 'Setup > ' + as[j].text + ' > '
+					break
+				}
+			}
+			var children = allLinks[i].getElementsByClassName("childContainer")[0].getElementsByTagName("a")
+			for(var j = 0;j<children.length;j++) {
+				if(children[j].text.length > 2) {
+					strName = strNameMain + children[j].text
+					cmds[strName] = {url: children[j].href, key: strName}
+				}
+			}
+		}
+		store('Store Commands', cmds)
 	}
+export const getSetupTree = () => {
+		var theurl = serverInstance + '.salesforce.com/setup/forcecomHomepage.apexp?setupid=ForceCom'
+		var req = new XMLHttpRequest()
+		req.onload = function() {
+		 parseSetupTree(this.response)
+	 }
+	 req.open("GET", theurl)
+	 req.responseType = 'document'
+	 req.send()
+	}
+export const getCustomObjects = () => {
+		var theurl = serverInstance + '.salesforce.com/p/setup/custent/CustomObjectsPage'
+		var req = new XMLHttpRequest()
+		req.onload = function() {
+			parseCustomObjectTree(this.response)
+		}
+	 req.open("GET", theurl)
+	 req.responseType = 'document'
+	 req.send()
+	}
+export const parseCustomObjectTree = (html) => {
+		$(html).find('th a').each(function(el) {
+			cmds['Setup > Custom Object > ' + this.text] = {url: this.href, key: this.text}
+		})
+		store('Store Commands', cmds)
+	}
+
+export const getMetadata = (data)=>{
+	if(data.length == 0) return
+	var metaData = JSON.parse(data)
+	var mRecord = {}
+	var act = {}
+	metaData = {}
+	for(var i=0;i<metaData.sobjects.length;i++) {
+		if(metaData.sobjects[i].keyPrefix != null) {
+			mRecord = {}
+			mRecord.label = metaData.sobjects[i].label
+			mRecord.labelPlural = metaData.sobjects[i].labelPlural
+			mRecord.keyPrefix = metaData.sobjects[i].keyPrefix
+			mRecord.urls = metaData.sobjects[i].urls
+			metaData[metaData.sobjects[i].keyPrefix] = mRecord
+			act = {}
+			act.key = metaData.sobjects[i].name
+			act.keyPrefix = metaData.sobjects[i].keyPrefix
+			act.url = serverInstance + '.salesforce.com/' + metaData.sobjects[i].keyPrefix
+			cmds['List ' + mRecord.labelPlural] = act
+			act = {}
+			act.key = metaData.sobjects[i].name
+			act.keyPrefix = metaData.sobjects[i].keyPrefix
+			act.url = serverInstance + '.salesforce.com/' + metaData.sobjects[i].keyPrefix
+			act.url += '/e'
+			cmds['New ' + mRecord.label] = act
+		}
+	}
+	store('Store Commands', cmds)
+	store('Store Metadata', metaData)
 }
