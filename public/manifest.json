@@ -1,6 +1,6 @@
 {
 	"name": "Salesforce Navigator for Lightning",
-	"version": "4.8.20",
+	"version": "4.8.20.1",
 	"manifest_version": 2,
 	"description": "Get more done in Salesforce - list and search records, make new ones, create a task or login as on the fly!",
 	"page_action": {

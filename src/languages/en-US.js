@@ -13,6 +13,7 @@ module.exports = {
 		"settings.theme": "Theme",
 		"settings.useApiName": "Show API Name",
 		"commands.home": "Home",
+		"commands.help": "Help",
 		"commands.setup": "Setup",
 		"commands.mergeAccounts": "Merge Accounts",
 		"commands.toggleAllCheckboxes": "Toggle All Checkboxes",
@@ -250,5 +251,10 @@ module.exports = {
 		"setup.emailOutlookSync": "Email > Outlook Integration and Sync",
 		"setup.emailExternalService": "Email > Send through External Email Services",
 		"setup.emailTestDeliverability": "Email > Test Deliverability",
+		"report.runReport" : "Run Report",
+		"report.editReport" : "Edit Report",
+		"commands.logout" : "Logout",
+		"moreData.permissionSetsInGroup" : "Permission Sets in Group",
+		"moreData.objectSettings" : "Object Settings"
 	},
 }
