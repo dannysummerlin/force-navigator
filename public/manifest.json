@@ -1,7 +1,7 @@
 {
 	"name": "Salesforce Navigator for Lightning",
-	"version": "4.8.20",
-	"manifest_version": 2,
+	"version": "4.10.1",
+	"manifest_version": 3,
 	"description": "Get more done in Salesforce - list and search records, make new ones, create a task or login as on the fly!",
 	"page_action": {
 		"default_icon": "images/sf-navigator32.png",
@@ -15,8 +15,14 @@
 		"128": "images/sf-navigator128.png"
 	},
 	"web_accessible_resources": [
-		"images/ajax-loader.gif",
-		"images/sf-navigator128.png"
+		{
+			"resources": [
+				"images/*"
+			],
+			"matches": [
+				"*://*/*"
+			]
+		}
 	],
 	"background": {
 		"scripts": [
@@ -71,11 +77,13 @@
 	"permissions": [
 		"activeTab",
 		"management",
-		"https://*.force.com/*",
-		"https://*.salesforce.com/*",
-		"https://*.cloudforce.com/*",
 		"storage",
 		"clipboardRead",
 		"cookies"
+	],
+	"host_permissions": [
+		"https://*.force.com/*",
+		"https://*.salesforce.com/*",
+		"https://*.cloudforce.com/*"
 	]
 }
