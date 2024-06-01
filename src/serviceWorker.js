@@ -1,5 +1,4 @@
 import { forceNavigator, forceNavigatorSettings, _d } from "./shared"
-// import * from "../scripts/pluralize.js" // might not actually be using this
 import { t } from "lisan"
 
 const metaData = {}

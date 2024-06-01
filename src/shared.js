@@ -548,7 +548,6 @@ export const forceNavigator = {
 		document.getElementById("sfnavQuickSearch").value = ""
 	},
 	"loadCommands": (settings, force = false) => {
-
 		if([forceNavigator.serverInstance, forceNavigator.organizationId, forceNavigator.sessionId].includes(null)) {
 			return forceNavigator.init()
 		}
