@@ -33,6 +33,7 @@
 		"matches": [
 			"https://*.force.com/*",
 			"https://*.salesforce.com/*",
+			"https://*.salesforce-setup.com/*",
 			"https://*.cloudforce.com/*"
 		],
 		"all_frames": true,

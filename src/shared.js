@@ -836,11 +836,11 @@ export const forceNavigator = {
 			"lightning": "/lightning/setup/LabelWorkbenchOverride/home",
 			"classic": "/i18n/LabelWorkbenchOverride.apexp?retURL=%2Fui%2Fsetup%2FSetup%3Fsetupid%3DLabelWorkbench&setupid=LabelWorkbenchOverride"
 		},
-		"setup.export": {
+		"setup.translationWorkbenchExport": {
 			"lightning": "/lightning/setup/LabelWorkbenchExport/home",
 			"classic": "/i18n/TranslationExport.apexp?retURL=%2Fui%2Fsetup%2FSetup%3Fsetupid%3DLabelWorkbench&setupid=LabelWorkbenchExport"
 		},
-		"setup.import": {
+		"setup.translationWorkbenchImport": {
 			"lightning": "/lightning/setup/LabelWorkbenchImport/home",
 			"classic": "/i18n/TranslationImport.apexp?retURL=%2Fui%2Fsetup%2FSetup%3Fsetupid%3DLabelWorkbench&setupid=LabelWorkbenchImport"
 		},
