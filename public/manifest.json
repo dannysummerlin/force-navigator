@@ -3,7 +3,7 @@
 	"version": "4.10.1",
 	"manifest_version": 3,
 	"description": "Get more done in Salesforce - list and search records, make new ones, create a task or login as on the fly!",
-	"page_action": {
+	"action": {
 		"default_icon": "images/sf-navigator32.png",
 		"default_popup": "popup.html",
 		"default_title": "Salesforce Navigator for Lightning"
@@ -25,12 +25,8 @@
 		}
 	],
 	"background": {
-		"scripts": [
-			"shared.js",
-			"scripts/pluralize.js",
-			"background.js"
-		],
-		"persistent": true
+	    "service_worker": "service_worker.js",
+	    "type": "module"
 	},
 	"content_scripts": [{
 		"css": [ "styles/main.css" ],
@@ -79,7 +75,8 @@
 		"management",
 		"storage",
 		"clipboardRead",
-		"cookies"
+		"cookies",
+		"scripting"
 	],
 	"host_permissions": [
 		"https://*.force.com/*",
