@@ -33,8 +33,8 @@ export const ui = {
 		let div = document.createElement("div")
 		div.setAttribute("id", "sfnavStyleBox")
 		div.setAttribute("class", theme)
-		const loaderURL = chrome.extension.getURL("images/ajax-loader.gif")
-		const logoURL = chrome.extension.getURL("images/sf-navigator128.png")
+		const loaderURL = chrome.runtime.getURL("images/ajax-loader.gif")
+		const logoURL = chrome.runtime.getURL("images/sf-navigator128.png")
 		div.innerHTML = `
 <div id="sfnavSearchBox">
 	<div class="sfnav_wrapper">

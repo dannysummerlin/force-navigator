@@ -7,18 +7,18 @@ const showElement = (element)=>{
 	chrome.tabs.query({currentWindow: true, active: true}, (tabs)=>{
 		switch(element) {
 			case "appMenu":
-				chrome.scripting.executeScript(target: tabs[0].id, func: ()=>{
+				chrome.scripting.executeScript({ target: { tabId: tabs[0].id }, func: ()=>{
 					document.getElementsByClassName("appLauncher")[0].getElementsByTagName("button")[0].click()
-				})
+				}})
 				break
 			case "searchBox":
-				chrome.scripting.executeScript(target: tabs[0].id, func: ()=>{
+				chrome.scripting.executeScript({ target: { tabId: tabs[0].id }, func: ()=>{
 					if(document.getElementById("sfnavSearchBox")) {
 						document.getElementById("sfnavSearchBox").style.zIndex = 9999
 						document.getElementById("sfnavSearchBox").style.opacity = 0.98
 						document.getElementById("sfnavQuickSearch").focus()
 					}
-				})
+				}})
 				break
 		}
 	})
@@ -75,7 +75,7 @@ chrome.commands.onCommand.addListener((command)=>{
 })
 chrome.runtime.onMessage.addListener((request, sender, sendResponse)=>{
 	var apiUrl = request.serverUrl?.replace('lightning.force.com','my.salesforce.com')
-	console.info(apiUrl + " : " + request.action)
+	console.debug(apiUrl + " : " + request.action)
 	switch(request.action) {
 		case "goToUrl":
 			goToUrl(request.url, request.newTab, request.settings)
@@ -87,8 +87,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse)=>{
 			request.sid = request.uid = request.domain = request.oid = ""
 			chrome.cookies.getAll({}, (all)=>{
 				all.forEach((c)=>{
-					//if (c.name="sid" && c.value.includes("!")) {console.log("cookie: " +c.domain + '   ' + c.value)}
-					//if (c.domain.includes("cognyte--uri.")) {console.log("cookie: " +c.domain + ' ' +c.name+ '   ' + c.value)}
 					if(c.domain==request.serverUrl && c.name === "sid") {
 						request.sid = c.value
 						request.domain = c.domain
