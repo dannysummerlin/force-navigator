@@ -521,7 +521,7 @@ console.log(cmdKey)
 			let cmdKey = ui.navOutput.childNodes[(forceNavigator.listPosition < 0 ? 0 : forceNavigator.listPosition)]?.dataset
 			keyToExpand = cmdKey?.key
 		}
-		if (keyToExpand == undefined) 
+		if (keyToExpand == undefined)
 			return
 		if(typeof forceNavigator.commands[keyToExpand] != 'undefined') {
 			let options = {
@@ -1883,6 +1883,22 @@ export const forceNavigator = {
 		"report.editReport": {
 			"lightning":"/lightning/o/Report/home",
 			"classic":"/00O/o"
+		},
+		"setup.deploymentStatus": {
+			"lightning":"/lightning/setup/DeployStatus/home",
+			"classic":""
+		},
+		"setup.externalServices": {
+			"lightning":"/lightning/setup/ExternalServices/home",
+			"classic":""
+		},
+		"setup.schemaBuilder": {
+			"lightning":"/lightning/setup/SchemaBuilder/home",
+			"classic":""
+		},
+		"setup.cors": {
+			"lightning":"/lightning/setup/CorsWhitelistEntries/home",
+			"classic":""
 		},
 	}
 }
