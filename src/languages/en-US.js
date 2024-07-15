@@ -260,6 +260,7 @@ module.exports = {
 		"setup.deploymentStatus" : "Deployment Status",
 		"setup.externalServices" : "External Services",
 		"setup.schemaBuilder" : "Schema Builder",
-		"setup.cors" : "Cross-Origin Resource Sharing (CORS)"
+		"setup.cors" : "Cross-Origin Resource Sharing (CORS)",
+		"setup.storageUsage" : "Storage Usage"
 	},
 }

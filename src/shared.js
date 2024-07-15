@@ -1900,6 +1900,10 @@ export const forceNavigator = {
 			"lightning":"/lightning/setup/CorsWhitelistEntries/home",
 			"classic":""
 		},
+		"setup.storageUsage": {
+			"lightning":"/lightning/setup/CompanyResourceDisk/home",
+			"classic":""
+		},
 	}
 }
 
