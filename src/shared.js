@@ -1904,6 +1904,10 @@ export const forceNavigator = {
 			"lightning":"/lightning/setup/CompanyResourceDisk/home",
 			"classic":""
 		},
+		"setup.scratchOrgs": {
+			"lightning":"/lightning/setup/ShapeGrantAccess/home",
+			"classic":""
+		},
 	}
 }
 

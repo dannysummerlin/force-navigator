@@ -261,6 +261,7 @@ module.exports = {
 		"setup.externalServices" : "External Services",
 		"setup.schemaBuilder" : "Schema Builder",
 		"setup.cors" : "Cross-Origin Resource Sharing (CORS)",
-		"setup.storageUsage" : "Storage Usage"
+		"setup.storageUsage" : "Storage Usage",
+		"setup.scratchOrgs" : "Scratch Orgs"
 	},
 }
