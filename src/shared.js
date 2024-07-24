@@ -1052,7 +1052,7 @@ export const forceNavigator = {
 		"objects.limits": "/Limits/view",
 		"objects.recordTypes": "/RecordTypes/view",
 		"objects.relatedLookupFilters": "/RelatedLookupFilters/view",
-		"objects.searchLayouts": "/SearchLayouts/view",
+		"objects.searchLayouts": "/MySearchLayouts/view",
 		"objects.triggers": "/ApexTriggers/view",
 		"objects.lightningPages": "/LightningPages/view",
 		"objects.validationRules": "/ValidationRules/view"
