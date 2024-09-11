@@ -262,6 +262,7 @@ module.exports = {
 		"setup.schemaBuilder" : "Schema Builder",
 		"setup.cors" : "Cross-Origin Resource Sharing (CORS)",
 		"setup.storageUsage" : "Storage Usage",
-		"setup.scratchOrgs" : "Scratch Orgs"
+		"setup.scratchOrgs" : "Scratch Orgs",
+		"setup.userManagementSettings" : "User Management Settings"
 	},
 }

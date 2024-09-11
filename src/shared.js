@@ -1908,6 +1908,10 @@ export const forceNavigator = {
 			"lightning":"/lightning/setup/ShapeGrantAccess/home",
 			"classic":""
 		},
+		"setup.userManagementSettings": {
+			"lightning":"/lightning/setup/UserManagementSettings/home",
+			"classic":""
+		},
 	}
 }
 
