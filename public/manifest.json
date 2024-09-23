@@ -1,9 +1,9 @@
 {
 	"name": "Salesforce Navigator for Lightning",
-	"version": "4.8.20.1",
-	"manifest_version": 2,
+	"version": "4.11.1",
+	"manifest_version": 3,
 	"description": "Get more done in Salesforce - list and search records, make new ones, create a task or login as on the fly!",
-	"page_action": {
+	"action": {
 		"default_icon": "images/sf-navigator32.png",
 		"default_popup": "popup.html",
 		"default_title": "Salesforce Navigator for Lightning"
@@ -15,29 +15,31 @@
 		"128": "images/sf-navigator128.png"
 	},
 	"web_accessible_resources": [
-		"images/ajax-loader.gif",
-		"images/sf-navigator128.png"
+		{
+			"resources": [
+				"images/*"
+			],
+			"matches": [
+				"*://*/*"
+			]
+		}
 	],
 	"background": {
-		"scripts": [
-			"shared.js",
-			"scripts/pluralize.js",
-			"background.js"
-		],
-		"persistent": true
+	    "service_worker": "serviceWorker.js",
+	    "type": "module"
 	},
 	"content_scripts": [{
 		"css": [ "styles/main.css" ],
 		"matches": [
 			"https://*.force.com/*",
 			"https://*.salesforce.com/*",
+			"https://*.salesforce-setup.com/*",
 			"https://*.cloudforce.com/*"
 		],
 		"all_frames": true,
 		"js": [
 			"contentScript.js",
 			"shared.js",
-			"scripts/pluralize.js",
 			"popup.js"
 		],
 		"run_at": "document_end"
@@ -59,11 +61,14 @@
 	"permissions": [
 		"activeTab",
 		"management",
-		"https://*.force.com/*",
-		"https://*.salesforce.com/*",
-		"https://*.cloudforce.com/*",
 		"storage",
 		"clipboardRead",
-		"cookies"
+		"cookies",
+		"scripting"
+	],
+	"host_permissions": [
+		"https://*.force.com/*",
+		"https://*.salesforce.com/*",
+		"https://*.cloudforce.com/*"
 	]
 }
