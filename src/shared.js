@@ -521,7 +521,7 @@ console.log(cmdKey)
 			let cmdKey = ui.navOutput.childNodes[(forceNavigator.listPosition < 0 ? 0 : forceNavigator.listPosition)]?.dataset
 			keyToExpand = cmdKey?.key
 		}
-		if (keyToExpand == undefined) 
+		if (keyToExpand == undefined)
 			return
 		if(typeof forceNavigator.commands[keyToExpand] != 'undefined') {
 			let options = {
@@ -1052,7 +1052,7 @@ export const forceNavigator = {
 		"objects.limits": "/Limits/view",
 		"objects.recordTypes": "/RecordTypes/view",
 		"objects.relatedLookupFilters": "/RelatedLookupFilters/view",
-		"objects.searchLayouts": "/SearchLayouts/view",
+		"objects.searchLayouts": "/MySearchLayouts/view",
 		"objects.triggers": "/ApexTriggers/view",
 		"objects.lightningPages": "/LightningPages/view",
 		"objects.validationRules": "/ValidationRules/view"
@@ -1883,6 +1883,34 @@ export const forceNavigator = {
 		"report.editReport": {
 			"lightning":"/lightning/o/Report/home",
 			"classic":"/00O/o"
+		},
+		"setup.deploymentStatus": {
+			"lightning":"/lightning/setup/DeployStatus/home",
+			"classic":""
+		},
+		"setup.externalServices": {
+			"lightning":"/lightning/setup/ExternalServices/home",
+			"classic":""
+		},
+		"setup.schemaBuilder": {
+			"lightning":"/lightning/setup/SchemaBuilder/home",
+			"classic":""
+		},
+		"setup.cors": {
+			"lightning":"/lightning/setup/CorsWhitelistEntries/home",
+			"classic":""
+		},
+		"setup.storageUsage": {
+			"lightning":"/lightning/setup/CompanyResourceDisk/home",
+			"classic":""
+		},
+		"setup.scratchOrgs": {
+			"lightning":"/lightning/setup/ShapeGrantAccess/home",
+			"classic":""
+		},
+		"setup.userManagementSettings": {
+			"lightning":"/lightning/setup/UserManagementSettings/home",
+			"classic":""
 		},
 	}
 }

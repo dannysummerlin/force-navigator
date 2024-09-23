@@ -256,6 +256,13 @@ module.exports = {
 		"report.editReport" : "Edit Report",
 		"commands.logout" : "Logout",
 		"moreData.permissionSetsInGroup" : "Permission Sets in Group",
-		"moreData.objectSettings" : "Object Settings"
+		"moreData.objectSettings" : "Object Settings",
+		"setup.deploymentStatus" : "Deployment Status",
+		"setup.externalServices" : "External Services",
+		"setup.schemaBuilder" : "Schema Builder",
+		"setup.cors" : "Cross-Origin Resource Sharing (CORS)",
+		"setup.storageUsage" : "Storage Usage",
+		"setup.scratchOrgs" : "Scratch Orgs",
+		"setup.userManagementSettings" : "User Management Settings"
 	},
 }
