@@ -196,7 +196,7 @@ export const ui = {
 	},
 	"selectMove": (direction)=>{
 		let words = Array.from(ui.navOutput.childNodes).reduce((a,w)=>a.concat([w.textContent]), [])
-		let isLastPos = direction == 'down' 
+		let isLastPos = direction == 'down'
 			? forceNavigator.listPosition < words.length-1 // is at the bottom
 			: forceNavigator.listPosition >= 0 // so direction = up, is at the top
 		if (words.length > 0 && isLastPos) {
@@ -631,8 +631,8 @@ export const forceNavigator = {
 		"objects.limits": "/Limits/view",
 		"objects.recordTypes": "/RecordTypes/view",
 		"objects.relatedLookupFilters": "/RelatedLookupFilters/view",
-		"objects.searchLayouts": "/SearchLayouts/view",
-		"objects.triggers": "/Triggers/view",
+		"objects.searchLayouts": "/MySearchLayouts/view",
+		"objects.triggers": "/ApexTriggers/view",
 		"objects.lightningPages": "/LightningPages/view",
 		"objects.validationRules": "/ValidationRules/view"
 	},
@@ -1449,6 +1449,46 @@ export const forceNavigator = {
 		},
 		"setup.emailTestDeliverability": {
 			"lightning":"/lightning/setup/TestEmailDeliverability/home",
+			"classic":""
+		},
+		"setup.territoryModels": {
+			"lightning":"/lightning/setup/Territory2Models/home",
+			"classic":"/ui/setup/territory2/Territory2ModelListPage?setupid = Territory2Models"
+		},
+		"report.runReport": {
+			"lightning":"/lightning/o/Report/home",
+			"classic":"/00O/o"
+		},
+		"report.editReport": {
+			"lightning":"/lightning/o/Report/home",
+			"classic":"/00O/o"
+		},
+		"setup.deploymentStatus": {
+			"lightning":"/lightning/setup/DeployStatus/home",
+			"classic":""
+		},
+		"setup.externalServices": {
+			"lightning":"/lightning/setup/ExternalServices/home",
+			"classic":""
+		},
+		"setup.schemaBuilder": {
+			"lightning":"/lightning/setup/SchemaBuilder/home",
+			"classic":""
+		},
+		"setup.cors": {
+			"lightning":"/lightning/setup/CorsWhitelistEntries/home",
+			"classic":""
+		},
+		"setup.storageUsage": {
+			"lightning":"/lightning/setup/CompanyResourceDisk/home",
+			"classic":""
+		},
+		"setup.scratchOrgs": {
+			"lightning":"/lightning/setup/ShapeGrantAccess/home",
+			"classic":""
+		},
+		"setup.userManagementSettings": {
+			"lightning":"/lightning/setup/UserManagementSettings/home",
 			"classic":""
 		},
 	}
