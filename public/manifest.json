@@ -45,18 +45,6 @@
 		"run_at": "document_end"
 	}],
 	"commands": {
-		"goToTasks": {
-			"description": "Go directly to Tasks",
-			"suggested_key": {
-				"default": "Ctrl+Shift+1"
-			}
-		},
-		"goToReports": {
-			"description": "Go directly to Reports",
-			"suggested_key": {
-				"default": "Ctrl+Shift+2"
-			}
-		},
 		"showSearchBox": {
 			"description": "Open Search Box",
 			"suggested_key": {

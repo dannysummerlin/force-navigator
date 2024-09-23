@@ -80,6 +80,12 @@
 	font-size: 16px;
 	text-decoration: none;
 }
+.sfnav_child_smaller {
+	font-size: 14px;
+}
+.sfnav_child_extra_small {
+	font-size: 10px;
+}
 #sfnavSearchBox input {
 	position: relative;
 	flex: 1;
