@@ -953,6 +953,15 @@ export const forceNavigator = {
 				return data
 		})
 	},
+    "getServiceDataHTTP" :(endpoint, type = "json", request = {}, data = {}, method = "GET") => {
+        return this.getHTTP(
+            "https://" + request.apiUrl + '/services/data/' + forceNavigator.apiVersion + endpoint,
+            type,
+            {"Authorization": "Bearer " + request.sessionId, "Accept": "application/json"},
+            data,
+            method
+        )
+    },
 	"refreshAndClear": ()=>{
 		ui.showLoadingIndicator()
 		forceNavigator.serverInstance = forceNavigator.getServerInstance(forceNavigator)
