@@ -666,7 +666,8 @@ export const forceNavigator = {
 			_d(e)
 		}
 	},
-	"createSObjectCommands": (commands, sObjectData, serverUrl) => {
+	"createSObjectCommands": (commands, sObjectData,qualifiedApiNameToDurableIdMap, serverUrl) => {
+        console.log('in createSObjectCommands', qualifiedApiNameToDurableIdMap)
 		const { labelPlural, label, name, keyPrefix } = sObjectData
 		const mapKeys = Object.keys(forceNavigator.objectSetupLabelsMap)
 		if (!keyPrefix || forceNavigatorSettings.skipObjects.includes(keyPrefix)) { return commands }
@@ -685,7 +686,7 @@ export const forceNavigator = {
 			"apiname": name
 		}
 		if(forceNavigatorSettings.lightningMode) {
-			let targetUrl = serverUrl + "/lightning/setup/ObjectManager/" + name
+			let targetUrl = serverUrl + "/lightning/setup/ObjectManager/" + (qualifiedApiNameToDurableIdMap[name] ?? name)
 			mapKeys.forEach(key=>{
 				commands[keyPrefix + "." + key] = {
 					"key": keyPrefix + "." + key,
@@ -954,7 +955,7 @@ export const forceNavigator = {
 		})
 	},
     "getServiceDataHTTP" :(endpoint, type = "json", request = {}, data = {}, method = "GET") => {
-        return this.getHTTP(
+        return forceNavigator.getHTTP(
             "https://" + request.apiUrl + '/services/data/' + forceNavigator.apiVersion + endpoint,
             type,
             {"Authorization": "Bearer " + request.sessionId, "Accept": "application/json"},

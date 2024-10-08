@@ -41,9 +41,9 @@ const getOtherExtensionCommands = (otherExtension, requestDetails, settings = {}
 	}
 }
 
-const parseMetadata = (data, url, settings = {}, serverUrl)=>{
+const parseMetadata = (data, serverUrl, qualifiedApiNameToDurableIdMap)=>{
 	if (data.length == 0 || typeof data.sobjects == "undefined") return false
-	return data.sobjects.reduce((commands, sObjectData) => forceNavigator.createSObjectCommands(commands, sObjectData, serverUrl), {})
+	return data.sobjects.reduce((commands, sObjectData) => forceNavigator.createSObjectCommands(commands,  sObjectData,qualifiedApiNameToDurableIdMap, serverUrl), {})
 }
 
 const goToUrl = (targetUrl, newTab, settings = {})=>{
@@ -135,12 +135,20 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse)=>{
 			break
 		case 'getMetadata':
 			if(metaData[request.sessionHash] == null || request.force)
-                forceNavigator.getServiceDataHTTP("/sobjects/", "json", request)
-					.then(response => {
-						// TODO good place to filter out unwanted objects
-						metaData[request.sessionHash] = parseMetadata(response, request.domain, request.settings, request.serverUrl)
-						sendResponse(metaData[request.sessionHash])
-					}).catch(e=>_d(e))
+                forceNavigator.getServiceDataHTTP('/query/?q=SELECT QualifiedApiName, DurableId FROM EntityDefinition WHERE EditDefinitionUrl != NULL', 'json', request)
+                    .then(response => {
+                        const qualifiedApiNameToDurableIdMap = response.records.reduce((map, r) => {
+                            map[r.QualifiedApiName] = r.DurableId
+                            return map
+                        }, {});
+                        forceNavigator.getServiceDataHTTP('/sobjects/', 'json', request)
+                            .then(response => {
+                                // TODO good place to filter out unwanted objects
+                                metaData[request.sessionHash] = parseMetadata(response, request.serverUrl, qualifiedApiNameToDurableIdMap);
+                                sendResponse(metaData[request.sessionHash]);
+                            });
+                    })
+                    .catch(e => _d(e));
 			else
 				sendResponse(metaData[request.sessionHash])
 			break
