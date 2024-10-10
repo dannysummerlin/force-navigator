@@ -1,4 +1,4 @@
-import { forceNavigator, forceNavigatorSettings, _d } from "./shared"
+import { forceNavigator, _d } from "./shared"
 import { t } from "lisan"
 
 const metaData = {}
