@@ -135,18 +135,18 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse)=>{
 			break
 		case 'getMetadata':
 			if(metaData[request.sessionHash] == null || request.force)
-                forceNavigator.getServiceDataHTTP('/query/?q=SELECT QualifiedApiName, DurableId FROM EntityDefinition WHERE EditDefinitionUrl != NULL', 'json', request)
-                    .then(response => {
-                        const qualifiedApiNameToDurableIdMap = response.records.reduce((map, r) => {
-                            map[r.QualifiedApiName] = r.DurableId
-                            return map
+                Promise.all([
+                    forceNavigator.getServiceDataHTTP('/query/?q=SELECT QualifiedApiName, DurableId FROM EntityDefinition WHERE EditDefinitionUrl != NULL', 'json', request),
+                    forceNavigator.getServiceDataHTTP('/sobjects/', 'json', request),
+                ])
+                    .then(([queryResponse, sobjectResponse]) => {
+                        const qualifiedApiNameToDurableIdMap = queryResponse.records.reduce((map, r) => {
+                            map[r.QualifiedApiName] = r.DurableId;
+                            return map;
                         }, {});
-                        forceNavigator.getServiceDataHTTP('/sobjects/', 'json', request)
-                            .then(response => {
-                                // TODO good place to filter out unwanted objects
-                                metaData[request.sessionHash] = parseMetadata(response, request.serverUrl, qualifiedApiNameToDurableIdMap);
-                                sendResponse(metaData[request.sessionHash]);
-                            });
+                        // TODO good place to filter out unwanted objects
+                        metaData[request.sessionHash] = parseMetadata(sobjectResponse, request.serverUrl, qualifiedApiNameToDurableIdMap);
+                        sendResponse(metaData[request.sessionHash]);
                     })
                     .catch(e => _d(e));
 			else
