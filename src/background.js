@@ -29,7 +29,6 @@ const showElement = (element)=>{
 	Case.fieldItems[1].layoutComponents[0].details.name - field name
 */
 const loadCompactLayoutForSobject = (sobject,options,compactLayoutFieldsForSobject,sendResponse=null) => {
-	//console.log("loadCompactLayoutForSobject " + sobject  + ".  options:",options)
 	let url ="https://" + options.apiUrl + '/services/data/' + forceNavigator.apiVersion + '/compactLayouts?q=' + encodeURI(sobject)
 	forceNavigator.getHTTP(url,"json", {"Authorization": "Bearer " + options.sessionId, "Accept": "application/json"})
 	.then(response => {

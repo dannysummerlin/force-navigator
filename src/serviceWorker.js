@@ -73,7 +73,6 @@ chrome.commands.onCommand.addListener((command)=>{
 })
 chrome.runtime.onMessage.addListener((request, sender, sendResponse)=>{
 	var apiUrl = request.serverUrl?.replace('lightning.force.com','my.salesforce.com')
-	console.debug(apiUrl + " : " + request.action)
 	switch(request.action) {
 		case "goToUrl":
 			goToUrl(request.url, request.newTab, request.settings)

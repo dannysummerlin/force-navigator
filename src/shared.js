@@ -401,7 +401,6 @@ export const ui = {
 			cmdKey = "commands.loginAs"
 			//details = ui.quickSearch.value
 		}
-console.log(cmdKey)
 		switch(ui.lookupMode) {
 			case LOOKUP_MODE_SHOW_SEARCH_RESULTS:
 				//Search mode
@@ -667,7 +666,6 @@ export const forceNavigator = {
 		}
 	},
 	"createSObjectCommands": (commands, sObjectData,qualifiedApiNameToDurableIdMap, serverUrl) => {
-        console.log('in createSObjectCommands', qualifiedApiNameToDurableIdMap)
 		const { labelPlural, label, name, keyPrefix } = sObjectData
 		const mapKeys = Object.keys(forceNavigator.objectSetupLabelsMap)
 		if (!keyPrefix || forceNavigatorSettings.skipObjects.includes(keyPrefix)) { return commands }
@@ -992,7 +990,6 @@ export const forceNavigator = {
 		chrome.runtime.sendMessage(Object.assign(options, {"action": "getSobjectNameFields"}), response=>{
 				Object.assign(forceNavigator.labelToNameFieldMapping, response.labelToNameFieldMapping)
 				Object.assign(forceNavigator.labelToSobjectApiNameMapping, response.labelToSobjectApiNameMapping)
-				//console.log("after getSobjectNameFields, loaded forceNavigator.labelToNameFieldMapping=",Object.keys(forceNavigator.labelToNameFieldMapping).length)
 		})
 		chrome.runtime.sendMessage(Object.assign(options, {"action": "getActiveFlows"}), response=>Object.assign(forceNavigator.commands, response))
 		forceNavigator.otherExtensions.filter(e=>{ return e.platform == (!!window.chrome ? "chrome-extension" : "moz-extension") }).forEach(e=>chrome.runtime.sendMessage(
@@ -1046,7 +1043,6 @@ export const forceNavigator = {
 	"loginAsPerform": (userId, newTab)=>{
 		let targetUrl = "https://" + forceNavigator.apiUrl + "/servlet/servlet.su?oid=" + forceNavigator.organizationId + "&suorgadminid=" + userId + "&retURL=" + encodeURIComponent(window.location.pathname) + "&targetURL=" + encodeURIComponent(window.location.pathname) + "&"
 		ui.hideSearchBox()
-		console.log ("login as url=" + targetUrl)
 		if(newTab) forceNavigator.goToUrl(targetUrl, true)
 		else forceNavigator.goToUrl(targetUrl)
 		return true
