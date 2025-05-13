@@ -1,4 +1,4 @@
-import { forceNavigator, forceNavigatorSettings, _d } from "./shared"
+import { forceNavigator, _d } from "./shared"
 import { t } from "lisan"
 
 const metaData = {}
@@ -41,10 +41,9 @@ const getOtherExtensionCommands = (otherExtension, requestDetails, settings = {}
 	}
 }
 
-const parseMetadata = (data, url, settings = {}, serverUrl)=>{
+const parseMetadata = (data, serverUrl, qualifiedApiNameToDurableIdMap)=>{
 	if (data.length == 0 || typeof data.sobjects == "undefined") return false
-	let mapKeys = Object.keys(forceNavigator.objectSetupLabelsMap)
-	return data.sobjects.reduce((commands, sObjectData) => forceNavigator.createSObjectCommands(commands, sObjectData, serverUrl), {})
+	return data.sobjects.reduce((commands, sObjectData) => forceNavigator.createSObjectCommands(commands,  sObjectData,qualifiedApiNameToDurableIdMap, serverUrl), {})
 }
 
 const goToUrl = (targetUrl, newTab, settings = {})=>{
@@ -103,7 +102,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse)=>{
 						if(request.sid === "") {
 							console.log("No session data found for " + request.serverUrl)
 							sendResponse({error: "No session data found for " + request.serverUrl})
-							return 
+							return
 						}
 						forceNavigator.getHTTP( apiUrl + '/services/data/' + forceNavigator.apiVersion, "json",
 							{"Authorization": "Bearer " + request.sid, "Accept": "application/json"}
@@ -116,13 +115,12 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse)=>{
 						})
 					}
 				)};
-		
+
 			})
 			break
 		case 'getActiveFlows':
 			let flowCommands = {}
-			forceNavigator.getHTTP("https://" + request.apiUrl + '/services/data/' + forceNavigator.apiVersion + '/query/?q=select+ActiveVersionId,Label+from+FlowDefinitionView+where+IsActive=true', "json",
-				{"Authorization": "Bearer " + request.sessionId, "Accept": "application/json"})
+                forceNavigator.getServiceDataHTTP("/query/?q=select+ActiveVersionId,Label+from+FlowDefinitionView+where+IsActive=true", "json", request)
 				.then(response => {
 					let targetUrl = request.domain + "/builder_platform_interaction/flowBuilder.app?flowId="
 					response.records.forEach(f=>{
@@ -137,24 +135,29 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse)=>{
 			break
 		case 'getMetadata':
 			if(metaData[request.sessionHash] == null || request.force)
-				forceNavigator.getHTTP("https://" + request.apiUrl + '/services/data/' + forceNavigator.apiVersion + '/sobjects/', "json",
-					{"Authorization": "Bearer " + request.sessionId, "Accept": "application/json"})
-					.then(response => {
-						// TODO good place to filter out unwanted objects
-						metaData[request.sessionHash] = parseMetadata(response, request.domain, request.settings, request.serverUrl)
-						sendResponse(metaData[request.sessionHash])
-					}).catch(e=>_d(e))
+                Promise.all([
+                    forceNavigator.getServiceDataHTTP('/query/?q=SELECT QualifiedApiName, DurableId FROM EntityDefinition WHERE EditDefinitionUrl != NULL', 'json', request),
+                    forceNavigator.getServiceDataHTTP('/sobjects/', 'json', request),
+                ])
+                    .then(([queryResponse, sobjectResponse]) => {
+                        const qualifiedApiNameToDurableIdMap = queryResponse.records.reduce((map, r) => {
+                            map[r.QualifiedApiName] = r.DurableId;
+                            return map;
+                        }, {});
+                        // TODO good place to filter out unwanted objects
+                        metaData[request.sessionHash] = parseMetadata(sobjectResponse, request.serverUrl, qualifiedApiNameToDurableIdMap);
+                        sendResponse(metaData[request.sessionHash]);
+                    })
+                    .catch(e => _d(e));
 			else
 				sendResponse(metaData[request.sessionHash])
 			break
 		case 'createTask':
-			forceNavigator.getHTTP("https://" + request.apiUrl + "/services/data/" + forceNavigator.apiVersion + "/sobjects/Task",
-				"json", {"Authorization": "Bearer " + request.sessionId, "Content-Type": "application/json" },
-				{"Subject": request.subject, "OwnerId": request.userId}, "POST")
+            forceNavigator.getServiceDataHTTP("/sobjects/Task", "json", request, {"Subject": request.subject, "OwnerId": request.userId}, "POST")
 			.then(function (response) { sendResponse(response) })
 			break
 		case 'searchLogins':
-			forceNavigator.getHTTP("https://" + request.apiUrl + "/services/data/" + forceNavigator.apiVersion + "/query/?q=SELECT Id, Name, Username FROM User WHERE Name LIKE '%25" + request.searchValue.trim() + "%25' OR Username LIKE '%25" + request.searchValue.trim() + "%25'", "json", {"Authorization": "Bearer " + request.sessionId, "Content-Type": "application/json" })
+            forceNavigator.getServiceDataHTTP("/query/?q=SELECT Id, Name, Username FROM User WHERE Name LIKE '%25" + request.searchValue.trim() + "%25' OR Username LIKE '%25" + request.searchValue.trim() + "%25'", "json", request)
 			.then(function(success) { sendResponse(success) }).catch(function(error) {
 				console.error(error)
 			})
