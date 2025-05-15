@@ -588,6 +588,7 @@ export const forceNavigatorSettings = {
 			if(forceNavigatorSettings.theme)
 				document.getElementById('sfnavStyleBox').classList = [forceNavigatorSettings.theme]
 			if(forceNavigator.sessionId !== null) { return }
+			if(forceNavigator.serverUrl?.includes('https://test.salesforce.com')) { return }
 			chrome.runtime.sendMessage({ "action": "getApiSessionId", "serverUrl": forceNavigator.serverUrl }, response=>{
 				if(response && response.error) { console.error("response", response, chrome.runtime.lastError); return }
 				try {
@@ -597,7 +598,7 @@ export const forceNavigatorSettings = {
 					forceNavigator.apiUrl = unescape(response.apiUrl)
 					forceNavigator.loadCommands(forceNavigatorSettings)
 				} catch(e) {
-					_d([e, response])
+					_d([e, response, chrome.runtime.lastError])
 				}
 				ui.hideLoadingIndicator()
 			})
@@ -666,7 +667,8 @@ export const forceNavigator = {
 			_d(e)
 		}
 	},
-	"createSObjectCommands": (commands, sObjectData, serverUrl) => {
+	"createSObjectCommands": (commands, sObjectData,qualifiedApiNameToDurableIdMap, serverUrl) => {
+        console.log('in createSObjectCommands', qualifiedApiNameToDurableIdMap)
 		const { labelPlural, label, name, keyPrefix } = sObjectData
 		const mapKeys = Object.keys(forceNavigator.objectSetupLabelsMap)
 		if (!keyPrefix || forceNavigatorSettings.skipObjects.includes(keyPrefix)) { return commands }
@@ -685,7 +687,7 @@ export const forceNavigator = {
 			"apiname": name
 		}
 		if(forceNavigatorSettings.lightningMode) {
-			let targetUrl = serverUrl + "/lightning/setup/ObjectManager/" + name
+			let targetUrl = serverUrl + "/lightning/setup/ObjectManager/" + (qualifiedApiNameToDurableIdMap[name] ?? name)
 			mapKeys.forEach(key=>{
 				commands[keyPrefix + "." + key] = {
 					"key": keyPrefix + "." + key,
@@ -787,7 +789,6 @@ export const forceNavigator = {
 			case "commands.refreshMetadata":
 				forceNavigator.refreshAndClear()
 				return true
-				break
 			case "commands.objectManager":
 				targetUrl = forceNavigator.serverInstance + "/lightning/setup/ObjectManager/home"
 				break
@@ -804,12 +805,10 @@ export const forceNavigator = {
 				forceNavigatorSettings.enhancedprofiles = !forceNavigatorSettings.enhancedprofiles
 				forceNavigatorSettings.set("enhancedprofiles", forceNavigatorSettings.enhancedprofiles)
 				return true
-				break
 			case "commands.toggleDeveloperName":
 				forceNavigatorSettings.developername = !forceNavigatorSettings.developername
 				forceNavigatorSettings.set("developername", forceNavigatorSettings.developername)
 				return true
-				break
 			case "commands.setup":
 				targetUrl = forceNavigator.serverInstance + (forceNavigatorSettings.lightningMode ? "/lightning/setup/SetupOneHome/home" : "/ui/setup/Setup")
 				break
@@ -914,7 +913,7 @@ export const forceNavigator = {
 		let serverUrl
 		let url = location.origin + ""
 		if(settings.lightningMode) {// if(url.indexOf("lightning.force") != -1)
-			serverUrl = url.replace('lightning.force.com','').replace('my.salesforce.com','') + "lightning.force.com"
+            serverUrl = url.replace(/my\.salesforce\.com$/, 'lightning.force.com').replace(/my\.salesforce-setup\.com$/, 'lightning.force.com')
 		} else {
 			if(url.includes("salesforce"))
 				serverUrl = url.substring(0, url.indexOf("salesforce")) + "salesforce.com"
@@ -953,6 +952,15 @@ export const forceNavigator = {
 				return data
 		})
 	},
+    "getServiceDataHTTP" :(endpoint, type = "json", request = {}, data = {}, method = "GET") => {
+        return forceNavigator.getHTTP(
+            "https://" + request.apiUrl + '/services/data/' + forceNavigator.apiVersion + endpoint,
+            type,
+            {"Authorization": "Bearer " + request.sessionId, "Accept": "application/json"},
+            data,
+            method
+        )
+    },
 	"refreshAndClear": ()=>{
 		ui.showLoadingIndicator()
 		forceNavigator.serverInstance = forceNavigator.getServerInstance(forceNavigator)
@@ -1054,7 +1062,6 @@ export const forceNavigator = {
 		"objects.relatedLookupFilters": "/RelatedLookupFilters/view",
 		"objects.searchLayouts": "/MySearchLayouts/view",
 		"objects.triggers": "/ApexTriggers/view",
-		"objects.lightningPages": "/LightningPages/view",
 		"objects.validationRules": "/ValidationRules/view"
 	},
 	"standardObjects": [
@@ -1913,222 +1920,4 @@ export const forceNavigator = {
 			"classic":""
 		},
 	}
-}
-
-export const sfObjectsGetData = {
-	"fieldsAndRelationships": {
-		"getDataRequest" : (apiname) => `/query/?q=SELECT DurableId, QualifiedApiName, Label, DataType, ValueTypeId FROM FieldDefinition WHERE EntityDefinition.QualifiedApiName = '${apiname}'`,
-		"processResponse" : (apiname,label,response) => {
-			let objCommands ={}
-			response.records.forEach(f=>{
-				const fieldId = f.DurableId.split(".")[1]
-				const key = "3rdlevel." + f.QualifiedApiName
-				objCommands[key] = {
-					"key": key,
-					"url": `/lightning/setup/ObjectManager/${apiname}/FieldsAndRelationships/${fieldId}/view`,
-					"label": label + " >> " + f.QualifiedApiName,
-					"sortValue" : 0.9  // Will cuase it to appear low on the sort
-				}
-				objCommands[key+ ".fieldLevelSecurity"] = {
-					"key": key + ".fieldLevelSecurity",
-					"url": `/lightning/setup/ObjectManager/${apiname}/FieldsAndRelationships/${fieldId}/edit?standardEdit = true`,
-					"label": label + " >> " + f.QualifiedApiName + " >> Field Level Security",
-					"sortValue" : 0.1  // Will cuase it to appear low on the sort
-				}
-			})
-			return objCommands
-		}
-	},
-	"triggers": {
-		"getDataRequest" : (apiname) => `/query/?q=SELECT id,Name FROM ApexTrigger where TableEnumOrId='${apiname}'`,
-		"processResponse" : (apiname,label,response) => {
-			let objCommands ={}
-			response.records.forEach(f=>{
-				const fieldId = f.Id
-				const key = "3rdlevel." + f.Name
-				objCommands[key] = {
-					"key": key,
-					"url": `/lightning/setup/ObjectManager/${apiname}/ApexTriggers/${fieldId}/view`,
-					"label": label + " >> " + f.Name,
-				}
-			})
-			return objCommands
-		}
-	},
-	"list":{
-		//For "List Object", will load all Listviews defined. for example "List Cases >> Open Cases", "List Cases >> Closed Cases"
-		"getDataRequest" : (apiname) => `/query/?q=SELECT Id, Name, DeveloperName, SobjectType FROM ListView Where SobjectType='${apiname}'`,
-		"processResponse" : (apiname,label,response) => {
-			let objCommands ={}
-			response.records.forEach(f=>{
-				objCommands["ListView." + f.Name] = {
-					"key": "ListView." + f.Name,
-					"url": `/lightning/o/${apiname}/list?filterName=${f.Id}`,
-					"label": label + " >> " + f.Name
-				}
-			})
-			return objCommands
-		}
-	},
-	"pageLayouts":{
-		"getDataRequest" : (apiname) => `/tooling/query?q=SELECT+Id,Name+FROM+Layout WHERE TableEnumOrId='${apiname}'`,
-		"processResponse" : (apiname,label,response) => {
-			let objCommands ={}
-			response.records.forEach(f=>{
-				objCommands["PageLayout." + f.Name] = {
-					"key": "PageLayout." + f.Name,
-					"url": `/lightning/setup/ObjectManager/${apiname}/PageLayouts/${f.Id}/view`,
-					"label": label + " >> " + f.Name
-				}
-			})
-			return objCommands
-		}
-	},
-	"validationRules":{
-		"getDataRequest" : (apiname) => `/tooling/query?q=SELECT Id, ValidationName FROM ValidationRule where EntityDefinition.DeveloperName = '${apiname}'`,
-		"processResponse" : (apiname,label,response) => {
-			let objCommands ={}
-			response.records.forEach(f=>{
-				objCommands["ValidationRules." + f.ValidationName] = {
-					"key": "ValidationRules." + f.ValidationName,
-					"url": `/lightning/setup/ObjectManager/${apiname}/ValidationRules/${f.Id}/view`,
-					"label": label + " >> "+ f.ValidationName
-				}
-			})
-			return objCommands
-		}
-	},
-	"users":{
-		"getDataRequest" : (apiname) => `/query/?q=select id,name from user`,
-		"processResponse" : (apiname,label,response) => {
-			let objCommands ={}
-			response.records.forEach(f=>{
-				let key = "users." + f.Name
-				objCommands[key] = {
-					"key": key,
-					"url": `/lightning/setup/ManageUsers/page?address=%2F${f.Id}%3Fnoredirect%3D1%26isUserEntityOverride%3D1`,
-					"label": label + " >> "+ f.Name,
-					"sortValue" : 0.9  // Will cuase it to appear low on the sort
-				}
-			})
-			return objCommands
-		}
-	},
-	"permissionSets":{
-		"getDataRequest" : (apiname) => `/query/?q=select type,id,label from PermissionSet where type in ('Regular','Standard','Session','')`,
-		"processResponse" : (apiname,label,response) => {
-			let objCommands ={}
-			response.records.forEach(f=>{
-				let key = "permissionset." + f.Label
-				objCommands[key] = {
-					"key": key,
-					"url": `/lightning/setup/PermSets/page?address=%2F${f.Id}`,
-					"label": label + " >> "+ f.Label,
-				}
-				objCommands[key+ ".objectSettings"] = {
-					"key": key + ".objectSettings",
-					"url": `/lightning/setup/PermSets/page?address=%2F${f.Id}%3Fs%3DEntityPermissions`,
-					"label": label + " >> "+ f.Label + " >> "+t("moreData.objectSettings"),
-					"sortValue" : 0.5  // Will cuase it to appear low on the sort
-				}
-			})
-			return objCommands
-		}
-	},
-	"permissionSetGroups":{
-		"getDataRequest" : (apiname) => `/query/?q=select id,MasterLabel from PermissionSetGroup`,
-		"processResponse" : (apiname,label,response) => {
-			let objCommands ={}
-			response.records.forEach(f=>{
-				let key = "permissionsetgroup." + f.MasterLabel
-				objCommands[key] = {
-					"key": key,
-					"url": `/lightning/setup/PermSetGroups/page?address=%2F${f.Id}`,
-					"label": label + " >> "+ f.MasterLabel,
-				}
-				objCommands[key+"permissionSetsIncluded"] = {
-					"key": key+"permissionSetsIncluded",
-					"url": `/lightning/setup/PermSetGroups/page?address=%2F${f.Id}%3Fs%3DComponentPS`,
-					"label": label + " >> "+ f.MasterLabel + " >> " +t("moreData.permissionSetsInGroup"),
-					"sortValue" : 0.5  // Will cuase it to appear low on the sort
-				}
-			})
-			return objCommands
-		}
-	},
-	"runReport":{
-		"getDataRequest" : (apiname) => `/query/?q=select Id, Name from report where IsDeleted = false`,
-		"processResponse" : (apiname,label,response) => {
-			let objCommands ={}
-			response.records.forEach(f=>{
-				objCommands["RunReport." + f.Name] = {
-					"key": "RunReport." + f.Name,
-					"url": `/lightning/r/sObject/${f.Id}/view`,
-					"label": t("prefix.setup") + " > " + t("report.runReport") + " >> " + f.Name
-				}
-				objCommands["EditReport." + f.Name] = {
-					"key": "EditReport." + f.Name,
-					"url": `/lightning/r/sObject/${f.Id}/edit`,
-					"label": t("prefix.setup") + " > " + t("report.editReport") + " >> " + f.Name
-				}
-			})
-			return objCommands
-		}
-	},
-	"editReport":{
-		"getDataRequest" : (apiname) => `/query/?q=select Id, Name from report where IsDeleted = false`,
-		"processResponse" : (apiname,label,response) => {
-			let objCommands ={}
-			response.records.forEach(f=>{
-				objCommands["RunReport." + f.Name] = {
-					"key": "RunReport." + f.Name,
-					"url": `/lightning/r/sObject/${f.Id}/view`,
-					"label": t("prefix.setup") + " > " + t("report.runReport") + " >> " + f.Name
-				}
-				objCommands["EditReport." + f.Name] = {
-					"key": "EditReport." + f.Name,
-					"url": `/lightning/r/sObject/${f.Id}/edit`,
-					"label": t("prefix.setup") + " > " + t("report.editReport") + " >> " + f.Name
-				}
-			})
-			return objCommands
-		}
-	},
-	"profiles":{
-		"getDataRequest" : (apiname) => `/query/?q=Select Id, Name From Profile`,
-		"processResponse" : (apiname,label,response) => {
-			let objCommands ={}
-			response.records.forEach(f=>{
-				let key = "profiles." + f.Name
-				objCommands[key] = {
-					"key": key,
-					"url": `/lightning/setup/Profiles/page?address=%2F${f.Id}`,
-					"label": t("prefix.setup") + " > " + t("setup.profiles") + " >> " + f.Name
-				}
-			})
-			return objCommands
-		}
-	},
-	"apexClasses":{
-		"getDataRequest" : (apiname) => `/query/?q=Select Id, Name From ApexClass`,
-		"processResponse" : (apiname,label,response) => {
-			let objCommands ={}
-			response.records.forEach(f=>{
-				let key = "apexClasses." + f.Name
-				objCommands[key] = {
-					"key": key,
-					"url": `/lightning/setup/ApexClasses/page?address=%2F${f.Id}`,
-					"label": t("setup.apexClasses") + " >> " + f.Name
-				}
-			})
-			return objCommands
-		}
-	},
-	"TEMPLATE":{
-		"getDataRequest" : (apiname) => ``,
-		"processResponse" : (apiname,label,response) => {
-			let objCommands = {}
-			return objCommands
-		}
-	},
 }
