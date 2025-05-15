@@ -69,6 +69,7 @@
 	"host_permissions": [
 		"https://*.force.com/*",
 		"https://*.salesforce.com/*",
+		"https://*.salesforce-setup.com/*",
 		"https://*.cloudforce.com/*"
 	]
 }

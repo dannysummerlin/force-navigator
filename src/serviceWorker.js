@@ -28,7 +28,7 @@ const getOtherExtensionCommands = (otherExtension, requestDetails, settings = {}
 	let commands = {}
 	if(chrome.management) {
 		chrome.management.get(otherExtension.id, response => {
-			if(chrome.runtime.lastError) { _d("Extension not found", chrome.runtime.lastError); return }
+			if(chrome.runtime.lastError) { _d(["Extension not found", chrome.runtime.lastError]); return }
 			otherExtension.commands.forEach(c=>{
 				commands[c.key] = {
 					"url": otherExtension.platform + "://" + otherExtension.urlId + c.url.replace("$URL",url).replace("$APIURL",apiUrl),
@@ -84,9 +84,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse)=>{
 			break
 		case "getApiSessionId":
 			request.sid = request.uid = request.domain = request.oid = ""
-			chrome.cookies.getAll({}, (all)=>{
+			chrome.cookies.getAll({name: 'sid'}, (all)=>{
 				all.forEach((c)=>{
-					if(c.domain==request.serverUrl && c.name === "sid") {
+					if(c.domain==request.serverUrl) {
 						request.sid = c.value
 						request.domain = c.domain
 						request.oid = request.sid.match(/([\w\d]+)/)[1]

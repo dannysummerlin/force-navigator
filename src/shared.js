@@ -588,6 +588,7 @@ export const forceNavigatorSettings = {
 			if(forceNavigatorSettings.theme)
 				document.getElementById('sfnavStyleBox').classList = [forceNavigatorSettings.theme]
 			if(forceNavigator.sessionId !== null) { return }
+			if(forceNavigator.serverUrl?.includes('https://test.salesforce.com')) { return }
 			chrome.runtime.sendMessage({ "action": "getApiSessionId", "serverUrl": forceNavigator.serverUrl }, response=>{
 				if(response && response.error) { console.error("response", response, chrome.runtime.lastError); return }
 				try {
@@ -597,7 +598,7 @@ export const forceNavigatorSettings = {
 					forceNavigator.apiUrl = unescape(response.apiUrl)
 					forceNavigator.loadCommands(forceNavigatorSettings)
 				} catch(e) {
-					_d([e, response])
+					_d([e, response, chrome.runtime.lastError])
 				}
 				ui.hideLoadingIndicator()
 			})
@@ -914,7 +915,7 @@ export const forceNavigator = {
 		let serverUrl
 		let url = location.origin + ""
 		if(settings.lightningMode) {// if(url.indexOf("lightning.force") != -1)
-			serverUrl = url.replace('lightning.force.com','').replace('my.salesforce.com','') + "lightning.force.com"
+            serverUrl = url.replace(/my\.salesforce\.com$/, 'lightning.force.com').replace(/my\.salesforce-setup\.com$/, 'lightning.force.com')
 		} else {
 			if(url.includes("salesforce"))
 				serverUrl = url.substring(0, url.indexOf("salesforce")) + "salesforce.com"
