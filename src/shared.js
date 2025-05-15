@@ -588,8 +588,9 @@ export const forceNavigatorSettings = {
 			if(forceNavigatorSettings.theme)
 				document.getElementById('sfnavStyleBox').classList = [forceNavigatorSettings.theme]
 			if(forceNavigator.sessionId !== null) { return }
+			if(forceNavigator.serverUrl?.includes('https://test.salesforce.com')) { return }
 			chrome.runtime.sendMessage({ "action": "getApiSessionId", "serverUrl": forceNavigator.serverUrl }, response=>{
-				if(response && response.error) { console.error("response", response, chrome.runtime.lastError); return }
+				if(response && response.error) { console.error("response", JSON.stringify(response), chrome.runtime.lastError); return }
 				try {
 					forceNavigator.sessionId = unescape(response.sessionId)
 					forceNavigator.userId = unescape(response.userId)
@@ -597,7 +598,7 @@ export const forceNavigatorSettings = {
 					forceNavigator.apiUrl = unescape(response.apiUrl)
 					forceNavigator.loadCommands(forceNavigatorSettings)
 				} catch(e) {
-					_d([e, response])
+					_d([e, response, chrome.runtime.lastError])
 				}
 				ui.hideLoadingIndicator()
 			})
@@ -666,7 +667,8 @@ export const forceNavigator = {
 			_d(e)
 		}
 	},
-	"createSObjectCommands": (commands, sObjectData, serverUrl) => {
+	"createSObjectCommands": (commands, sObjectData,qualifiedApiNameToDurableIdMap, serverUrl) => {
+        console.log('in createSObjectCommands', qualifiedApiNameToDurableIdMap)
 		const { labelPlural, label, name, keyPrefix } = sObjectData
 		const mapKeys = Object.keys(forceNavigator.objectSetupLabelsMap)
 		if (!keyPrefix || forceNavigatorSettings.skipObjects.includes(keyPrefix)) { return commands }
@@ -685,7 +687,7 @@ export const forceNavigator = {
 			"apiname": name
 		}
 		if(forceNavigatorSettings.lightningMode) {
-			let targetUrl = serverUrl + "/lightning/setup/ObjectManager/" + name
+			let targetUrl = serverUrl + "/lightning/setup/ObjectManager/" + (qualifiedApiNameToDurableIdMap[name] ?? name)
 			mapKeys.forEach(key=>{
 				commands[keyPrefix + "." + key] = {
 					"key": keyPrefix + "." + key,
@@ -914,7 +916,7 @@ export const forceNavigator = {
 		let serverUrl
 		let url = location.origin + ""
 		if(settings.lightningMode) {// if(url.indexOf("lightning.force") != -1)
-			serverUrl = url.replace('lightning.force.com','').replace('my.salesforce.com','') + "lightning.force.com"
+            serverUrl = url.replace(/my\.salesforce\.com$/, 'lightning.force.com').replace(/my\.salesforce-setup\.com$/, 'lightning.force.com')
 		} else {
 			if(url.includes("salesforce"))
 				serverUrl = url.substring(0, url.indexOf("salesforce")) + "salesforce.com"
@@ -941,7 +943,7 @@ export const forceNavigator = {
 		if(Object.keys(data).length > 0)
 			request.body = JSON.stringify(data)
 		return fetch(getUrl, request).then(response => {
-			forceNavigator.apiUrl = response.url.match(/:\/\/(.*)salesforce.com/)[1] + "salesforce.com"
+            forceNavigator.apiUrl = new URL(response.url).host;
 			switch(type) {
 				case "json": return response.clone().json()
 				case "document": return response.clone().text()
@@ -953,6 +955,15 @@ export const forceNavigator = {
 				return data
 		})
 	},
+    "getServiceDataHTTP" :(endpoint, type = "json", request = {}, data = {}, method = "GET") => {
+        return forceNavigator.getHTTP(
+            "https://" + request.apiUrl + '/services/data/' + forceNavigator.apiVersion + endpoint,
+            type,
+            {"Authorization": "Bearer " + request.sessionId, "Accept": "application/json"},
+            data,
+            method
+        )
+    },
 	"refreshAndClear": ()=>{
 		ui.showLoadingIndicator()
 		forceNavigator.serverInstance = forceNavigator.getServerInstance(forceNavigator)
